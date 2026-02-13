@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- saved from url=(0044)file:///C:/Users/Amr1/Desktop/CSCourses.html -->
 <html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
@@ -48,6 +49,23 @@
             <span class="slider"></span>
           </label>
           Select multiple courses
+        </div>
+
+        <div class="select-multiple-container">
+          <label class="switch">
+            <input id="loadBalanceToggle" type="checkbox">
+            <span class="slider"></span>
+          </label>
+          ⚖️ Balance Load (by difficulty)
+        </div>
+
+        <div class="select-multiple-container">
+          <button onclick="showAttemptsModal()" 
+                  style="padding: 8px 16px; background: linear-gradient(135deg, #8b5cf6, #6366f1); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 13px; box-shadow: 0 2px 8px rgba(139,92,246,0.3); transition: transform 0.2s; font-family: inherit;"
+                  onmouseover="this.style.transform='translateY(-2px)'"
+                  onmouseout="this.style.transform='translateY(0)'">
+            📊 Track Attempts
+          </button>
         </div>
       </div>
       <div id="div_sel"></div>
