@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
+    
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    
+      <link rel="stylesheet" href="style.css">
+</head>
+  <body>
+    <h2>
+      New Regulation -( <span id="it" class="program active">IT</span> )- (
+      <span id="ai" class="program">AI</span>) Courses
+    </h2>
+
+    <div class="courses-section">
+      <table id="courses_table"><tr id="semester-1"><td class="header">Semester 1</td><td id="IT111" class="course">Electronics</td><td id="MA111" class="course">Mathematics1</td><td id="HU111" class="course">Technical Report Writing</td><td id="HU413" class="course">Human Rights</td><td id="MA112" class="course">Discrete Math</td><td id="IT110" class="course">Introduction to Computers</td></tr><tr id="semester-2"><td class="header">Semester 2</td><td id="ST121" class="course">Probability and Statistics-1</td><td id="HU112" class="course">Creative and Scientific Thinking</td><td id="MA113" class="course">Mathematics-2</td><td id="HU101" class="course">Micro Economics</td><td id="IT113" class="course">Logic Design</td><td id="CS112" class="course">Programming Language</td></tr><tr id="semester-3"><td class="header">Semester 3</td><td id="CS215" class="course">Object Oriented Programing</td><td id="DS211" class="course">Introduction to Database systems</td><td id="MA214" class="course">Mathematics-3 </td><td id="IT231" class="course">Computer Networks Technology</td><td id="ST222" class="course">Probability and Statistics-2</td><td id="CS240" class="course">Introduction to Software Engineering</td></tr><tr id="semester-4"><td class="header">Semester 4</td><td id="IT217" class="course">Introduction to Operation Research</td><td id="CS216" class="course">Data Structure</td><td id="AI321" class="course">Machine Learning Fundamentals</td><td id="IT230" class="course">Web Technology</td><td id="HU427" class="course">Entrepreneurship</td><td id="LB211" class="course">Networking Fundamentals lab</td></tr><tr id="semester-5"><td class="header">Semester 5</td><td id="LB312" class="course">Network Routing and Switching-Lab</td><td id="AI311" class="course">Artificial intelligence</td><td id="CS319" class="course">Operating Systems</td><td id="IT212" class="course">Digital Signal Processing</td><td id="CS318" class="course">Computer Organization</td><td id="CS341" class="course">Algorithms analysis and Design</td></tr><tr id="semester-6"><td class="header">Semester 6</td><td id="IT322" class="course">Pattern Recognition</td><td id="IT333" class="course">Information Computer Networks Security</td><td id="AI448" class="course">op-Natural Language Processing</td><td id="CS344" class="course">Advanced Software Engineering</td><td id="IT343" class="course">Microcontroller</td><td id="LB313" class="course">Ethical Hacking-lab</td></tr><tr id="semester-7"><td class="header">Semester 7</td><td id="LB421" class="course">Selected labs in Software Engineering</td><td id="IT423" class="course">Embedded Systems</td><td id="IT221" class="course">Computer Graphics</td><td id="IT434" class="course">Advanced Computer Networks</td><td id="PC401" class="course">Project (1)</td><td id="IT438" class="course">Communication Technology</td></tr><tr id="semester-8"><td class="header">Semester 8</td><td id="IT436" class="course">Cloud Computing Networking</td><td id="AI435" class="course">Semantic Web and ontology</td><td id="IT439" class="course">Wireless and Mobile Networks</td><td id="HU402" class="course">Fundamental of Management</td><td id="PC402" class="course">Project (2)</td><td id="LB431" class="course">Selected labs in AI</td></tr><tr id="additional-courses"><td class="header">Additional Courses</td><td id="TR" class="course">Summer Training</td><td id="BMA001" class="course">Mathematics-0</td></tr></table>
+
+      <div class="legend-toggle-container">
+        <table id="legend">
+          <tbody>
+          <tr>
+            <td class="selected" style="width: 20px; height: 20px;"></td>
+            <td>Selected courses</td>
+          </tr>
+          <tr>
+            <td class="direct" style="width: 20px; height: 20px;"></td>
+            <td>Direct prerequisite</td>
+          </tr>
+          <tr>
+            <td class="prev" style="width: 20px; height: 20px;"></td>
+            <td>Indirect prerequisite</td>
+          </tr>
+          <tr>
+            <td class="next" style="width: 20px; height: 20px;"></td>
+            <td>Next courses</td>
+          </tr>
+        </tbody></table>
+        
+        <div class="select-multiple-container">
+          <label class="switch">
+            <input id="selectMulti" type="checkbox">
+            <span class="slider"></span>
+          </label>
+          Select multiple courses
+        </div>
+      </div>
+      <div id="div_sel"></div>
+    </div>
+
+    <!-- PDF Upload Interface -->
+    <div class="upload-container">
+      <div class="upload-box" id="uploadBox">
+        <input type="file" id="pdfInput" accept=".pdf,.xlsx" />
+        <div class="upload-label">📄 Upload Student Record (PDF/Excel)</div>
+        <p class="upload-hint">Click to upload بيان حالة - PDF or Excel format</p>
+      </div>
+
+      <!-- Student Info -->
+      <div class="student-info" id="studentInfo" style="display: none;">
+        <h4>📋 Student Information</h4>
+        <p id="studentName"></p>
+        <p id="studentId"></p>
+        <p id="studentLevel"></p>
+      </div>
+
+      <!-- Statistics -->
+      <div class="stats-container" id="statsContainer" style="display: none;">
+        <!-- Graduation Progress Ring Card -->
+        <div class="stat-card ring-card">
+          <svg class="ring-svg" width="90" height="90" viewBox="0 0 90 90">
+            <defs>
+              <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#2563eb"/>
+                <stop offset="100%" stop-color="#818cf8"/>
+              </linearGradient>
+            </defs>
+            <circle class="ring-bg" cx="45" cy="45" r="36"/>
+            <circle class="ring-fill" id="progressRing" cx="45" cy="45" r="36"
+              style="stroke-dasharray: 226.19; stroke-dashoffset: 226.19;" stroke="url(#ringGrad)"/>
+            <text id="progressRingText" x="45" y="50" text-anchor="middle"
+              font-size="14" font-weight="700" fill="#2563eb" font-family="Inter,sans-serif">0%</text>
+          </svg>
+          <div class="ring-info">
+            <h3>Graduation Progress</h3>
+            <div class="stat-value" id="creditHours" style="font-size:22px;">0/135</div>
+            <div class="progress-bar">
+              <div class="progress-fill" id="creditProgress" style="width: 0%"></div>
+            </div>
+            <div class="stat-label" id="creditPercentage" style="margin-top:6px;">0% Complete</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <h3>GPA</h3>
+          <div class="stat-value" id="gpaValue">0.00</div>
+          <div class="stat-label" id="gpaGrade">Not Available</div>
+        </div>
+
+        <div class="stat-card">
+          <h3>Completed Courses</h3>
+          <div class="stat-value" id="completedCount">0</div>
+          <div class="stat-label" id="remainingCount">0 Remaining</div>
+        </div>
+      </div>
+
+      <!-- Remaining Courses -->
+      <div class="remaining-courses" id="remainingCourses" style="display: none;">
+        <h3>📚 Remaining Courses <span style="font-size:12px; font-weight:500; color:var(--text-muted); background:#f1f5f9; padding:3px 10px; border-radius:99px; margin-left:8px;">✋ Drag into study plan</span></h3>
+        <div class="course-list" id="courseList"></div>
+      </div>
+
+      <!-- Study Plan Generator -->
+      <div class="study-plan-container" id="studyPlanContainer" style="display: none;">
+        <div class="study-plan-header">
+          <h3>🎓 Study Plan Generator</h3>
+          <button class="generate-plan-btn" id="generatePlanBtn">Generate Optimized Study Plan</button>
+        </div>
+        
+        <div id="planSelectorDiv" style="display: none;">
+          <div class="plan-selector" id="planSelector"></div>
+        </div>
+
+        <div id="studyPlanDisplay"></div>
+      </div>
+
+    </div>
+
+  
+
+
+ 
+
+  <!-- Floating Action Buttons (PDF moved to study plan actions bar) -->
+  <div class="fab-container" id="fabContainer" style="display:none;">
+    <button class="fab-btn fab-pdf" id="fabExportPdf" onclick="exportStudyPlanAsPDF()" title="Export study plan as PDF">
+      🖨️ Export as PDF
+    </button>
+  </div>
+
+  <!-- TechBot Toast Notification -->
+  <div id="techbot-toast">
+    <div class="bot-character">
+      🤖
+      <div class="robot-mouth-overlay"></div>
+    </div>
+      <div class="toast-message">
+        <div class="toast-message-title">🤖 Assistant Bot</div>
+        <div class="toast-message-text" id="toast-text"></div>
+      </div>
+  </div>
+
+  <!-- TechBot Modal Dialog -->
+  <div id="techbot-modal">
+    <div class="modal-content">
+      <div class="modal-bot">
+        <div style="text-align:center; font-size: 72px; position: relative; display: inline-block;">
+          🤖
+          <div class="robot-mouth-overlay" style="bottom: 22px;"></div>
+        </div>
+      </div>
+      <div class="modal-message">
+        <h3 id="modal-title">Assistant Bot Says</h3>
+        <p id="modal-text"></p>
+      </div>
+      <div class="modal-buttons" id="modal-buttons">
+        <button class="modal-btn modal-btn-primary" onclick="closeTechBotModal()">Got it!</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Graduate Earlier Options Modal -->
+  <div id="shortcut-modal">
+    <div class="shortcut-modal-panel">
+      <div class="shortcut-modal-header">
+        <div>
+          <h2 class="shortcut-modal-title" style="position:static;height:auto;background:none;box-shadow:none;border:none;font-size:20px;">⚡ Graduate Earlier — Choose an Option</h2>
+          <p class="shortcut-modal-subtitle" id="shortcut-modal-subtitle"></p>
+        </div>
+        <button class="shortcut-modal-close" onclick="closeShortcutModal()" title="Close">✕</button>
+      </div>
+      <div class="shortcut-options-grid" id="shortcut-options-grid"></div>
+    </div>
+  </div>
+
+  <!-- Summer Bridge Modal -->
+  <div id="bridge-modal" style="
+        position:fixed; inset:0; background:rgba(0,0,0,0.55);
+        backdrop-filter:blur(5px); z-index:10002;
+        display:none; align-items:center; justify-content:center;
+        padding:20px; animation:fadeIn 0.25s ease;">
+    <div class="shortcut-modal-panel">
+      <div class="shortcut-modal-header">
+        <div>
+          <h2 class="shortcut-modal-title" style="position:static;height:auto;background:none;box-shadow:none;border:none;font-size:20px;">🌞 Unlock Courses Earlier — Summer Bridge</h2>
+          <p class="shortcut-modal-subtitle" id="bridge-modal-subtitle"></p>
+        </div>
+        <button class="shortcut-modal-close" onclick="closeBridgeModal()" title="Close">✕</button>
+      </div>
+      <div class="shortcut-options-grid" id="bridge-options-grid"></div>
+    </div>
+  </div>
+
+  
+
+    <script src="script.js"></script>
+</body></html>
