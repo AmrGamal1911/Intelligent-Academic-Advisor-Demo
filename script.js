@@ -1,3 +1,423 @@
+// ============================================================
+// LOAD BALANCING AND ENHANCED FEATURES
+// Add this code to script.js after the course definitions
+// ============================================================
+
+// Course Difficulty Ratings (1-5, where 5 is hardest)
+const COURSE_DIFFICULTY = {
+  // Semester 1
+  'IT111': 2,  // Electronics
+  'MA111': 3,  // Mathematics-1
+  'HU111': 1,  // Technical Report Writing
+  'HU413': 1,  // Human Rights
+  'MA112': 3,  // Discrete Math
+  'IT110': 1,  // Introduction to Computers
+  
+  // Semester 2
+  'ST121': 3,  // Probability and Statistics-1
+  'HU112': 1,  // Creative and Scientific Thinking
+  'MA113': 4,  // Mathematics-2
+  'HU101': 2,  // Micro Economics
+  'IT113': 3,  // Logic Design
+  'CS112': 3,  // Programming Language
+  
+  // Semester 3
+  'CS215': 4,  // Object Oriented Programming
+  'DS211': 3,  // Introduction to Database systems
+  'MA214': 4,  // Mathematics-3
+  'IT231': 3,  // Computer Networks Technology
+  'ST222': 3,  // Probability and Statistics-2
+  'CS240': 3,  // Introduction to Software Engineering
+  
+  // Semester 4
+  'IT217': 3,  // Introduction to Operation Research
+  'CS216': 4,  // Data Structure
+  'AI321': 4,  // Machine Learning Fundamentals
+  'IT230': 2,  // Web Technology
+  'HU427': 1,  // Entrepreneurship
+  'LB211': 2,  // Networking Fundamentals lab
+  
+  // Semester 5
+  'LB312': 3,  // Network Routing and Switching-Lab
+  'AI311': 5,  // Artificial intelligence
+  'CS319': 4,  // Operating Systems
+  'IT212': 4,  // Digital Signal Processing
+  'CS318': 4,  // Computer Organization
+  'CS341': 5,  // Algorithms analysis and Design
+  
+  // Semester 6
+  'IT322': 4,  // Pattern Recognition
+  'IT333': 4,  // Information Computer Networks Security
+  'AI448': 5,  // Natural Language Processing
+  'CS344': 4,  // Advanced Software Engineering
+  'IT343': 3,  // Microcontroller
+  'LB313': 3,  // Ethical Hacking-lab
+  
+  // Semester 7
+  'LB421': 3,  // Selected labs in Software Engineering
+  'IT423': 4,  // Embedded Systems
+  'IT221': 3,  // Computer Graphics
+  'IT434': 4,  // Advanced Computer Networks
+  'PC401': 5,  // Project (1)
+  'IT438': 3,  // Communication Technology
+  
+  // Semester 8
+  'IT436': 4,  // Cloud Computing Networking
+  'AI435': 5,  // Semantic Web and ontology
+  'IT439': 4,  // Wireless and Mobile Networks
+  'HU402': 1,  // Fundamental of Management
+  'PC402': 5,  // Project (2)
+  'LB431': 3,  // Selected labs in AI
+  
+  // Additional
+  'TR': 2,      // Summer Training
+  'BMA001': 2   // Mathematics-0
+};
+
+// Student attempt tracking (stored in localStorage)
+const AttemptTracker = {
+  // Get attempts for a course
+  getAttempts(courseCode) {
+    const data = JSON.parse(localStorage.getItem('courseAttempts') || '{}');
+    return data[courseCode] || 0;
+  },
+  
+  // Set attempts for a course
+  setAttempts(courseCode, attempts) {
+    const data = JSON.parse(localStorage.getItem('courseAttempts') || '{}');
+    data[courseCode] = Math.max(0, parseInt(attempts) || 0);
+    localStorage.setItem('courseAttempts', JSON.stringify(data));
+  },
+  
+  // Increment attempts
+  incrementAttempts(courseCode) {
+    const current = this.getAttempts(courseCode);
+    this.setAttempts(courseCode, current + 1);
+  },
+  
+  // Get all courses with attempts
+  getAllAttempts() {
+    return JSON.parse(localStorage.getItem('courseAttempts') || '{}');
+  },
+  
+  // Clear all attempts
+  clearAll() {
+    localStorage.removeItem('courseAttempts');
+  }
+};
+
+// Load Balancing Calculator
+const LoadBalancer = {
+  // Calculate difficulty score for a semester
+  calculateSemesterLoad(courseCodes) {
+    let totalDifficulty = 0;
+    let totalHours = 0;
+    let maxDifficulty = 0;
+    
+    courseCodes.forEach(code => {
+      const difficulty = COURSE_DIFFICULTY[code] || 3;
+      const attempts = AttemptTracker.getAttempts(code);
+      const hours = courses[code]?.hours || 3;
+      
+      // Weight difficulty by attempts (each attempt adds 0.5 to difficulty)
+      const adjustedDifficulty = difficulty + (attempts * 0.5);
+      
+      totalDifficulty += adjustedDifficulty * hours;
+      totalHours += hours;
+      maxDifficulty = Math.max(maxDifficulty, adjustedDifficulty);
+    });
+    
+    return {
+      totalDifficulty,
+      totalHours,
+      averageDifficulty: totalHours > 0 ? totalDifficulty / totalHours : 0,
+      maxDifficulty,
+      weightedScore: totalDifficulty // This is the main metric
+    };
+  },
+  
+  // Check if semester is balanced (not too hard)
+  isBalanced(courseCodes, maxWeightedScore = 50) {
+    const load = this.calculateSemesterLoad(courseCodes);
+    return load.weightedScore <= maxWeightedScore;
+  },
+  
+  // Suggest redistributing courses to balance load
+  redistributeCourses(semesters) {
+    // This is a simple greedy algorithm
+    // For each overloaded semester, try to move hardest courses to lighter semesters
+    
+    const MAX_WEIGHTED_SCORE = 50; // Threshold for balanced semester
+    
+    semesters.forEach((semester, semIndex) => {
+      if (semester.isSummer) return; // Don't rebalance summer
+      
+      const load = this.calculateSemesterLoad(semester.courses);
+      
+      if (load.weightedScore > MAX_WEIGHTED_SCORE && semIndex < semesters.length - 1) {
+        // Find hardest course in this semester
+        let hardestCode = null;
+        let hardestScore = 0;
+        
+        semester.courses.forEach(code => {
+          const difficulty = COURSE_DIFFICULTY[code] || 3;
+          const attempts = AttemptTracker.getAttempts(code);
+          const score = difficulty + (attempts * 0.5);
+          
+          if (score > hardestScore) {
+            hardestScore = score;
+            hardestCode = code;
+          }
+        });
+        
+        // Try to move to next semester if it's lighter
+        if (hardestCode) {
+          const nextSemester = semesters[semIndex + 1];
+          const nextLoad = this.calculateSemesterLoad(nextSemester.courses);
+          
+          if (nextLoad.weightedScore < MAX_WEIGHTED_SCORE - 10) {
+            // Move the course
+            const courseIndex = semester.courses.indexOf(hardestCode);
+            semester.courses.splice(courseIndex, 1);
+            semester.hours -= courses[hardestCode].hours;
+            
+            nextSemester.courses.push(hardestCode);
+            nextSemester.hours += courses[hardestCode].hours;
+          }
+        }
+      }
+    });
+  }
+};
+
+// Enhanced validateCourseMove function with Project restrictions
+function validateCourseMoveEnhanced(courseCode, fromIndex, toIndex) {
+  const plan = generatedPlans[currentPlanIndex];
+  const toSemester = plan.semesters[toIndex];
+  const fromSemester = plan.semesters[fromIndex];
+  const course = courses[courseCode];
+
+  if (!course) {
+    return { valid: false, message: 'Course not found' };
+  }
+
+  // ============================================================
+  // NEW: Prevent Project 1 and Project 2 from moving to wrong semester types
+  // ============================================================
+  if (courseCode === 'PC401' || courseCode === 'PC402') {
+    const fromIsOdd = fromSemester.name.includes('First');
+    const toIsOdd = toSemester.name.includes('First');
+    
+    if (fromIsOdd !== toIsOdd && !toSemester.isSummer) {
+      const projectName = courseCode === 'PC401' ? 'Project 1' : 'Project 2';
+      const requiredType = fromIsOdd ? 'odd (First/Fall)' : 'even (Second/Spring)';
+      return {
+        valid: false,
+        message: `🚫 ${projectName} must remain in ${requiredType} semesters. Cannot move to ${toIsOdd ? 'odd' : 'even'} semester.`
+      };
+    }
+  }
+
+  // Continue with existing validation...
+  const semesterValidation = validateSummerPlacement(courseCode, toSemester);
+  if (!semesterValidation.valid) {
+    return semesterValidation;
+  }
+
+  // Rest of validation logic...
+  let semesterTypeWarning = null;
+  if (!toSemester.isSummer) {
+    const courseSemType = getSemesterType(course.semester);
+    const toTermType = toSemester.name.includes('First') ? 1 : 2;
+    if (courseSemType && courseSemType !== toTermType) {
+      const fromLabel = courseSemType === 1 ? 'First (Odd/Fall)' : 'Second (Even/Spring)';
+      const toLabel   = toTermType   === 1 ? 'First (Odd/Fall)' : 'Second (Even/Spring)';
+      semesterTypeWarning = `⚠️ "${course.name}" is a ${fromLabel} semester course being moved to a ${toLabel} semester. This is an irregular placement — double-check your plan.`;
+    }
+  }
+
+  const newHours = toSemester.hours + course.hours;
+  
+  if (toSemester.isSummer) {
+    const maxSummerHours = toSemester.isSpecialCase ? 12 : 9;
+    if (newHours > maxSummerHours) {
+      return { 
+        valid: false, 
+        message: `Summer limit is ${maxSummerHours}h (would be ${newHours}h)` 
+      };
+    }
+  } else {
+    const maxHours = toSemester.isSpecialCase ? 21 : 18;
+    if (newHours > maxHours) {
+      return { 
+        valid: false, 
+        message: `Semester limit is ${maxHours}h (would be ${newHours}h)` 
+      };
+    }
+  }
+
+  const validation = validatePrerequisites(courseCode, toIndex);
+  if (!validation.valid) {
+    return validation;
+  }
+
+  if (semesterTypeWarning) {
+    return { valid: true, message: semesterTypeWarning, isWarning: true };
+  }
+
+  return { 
+    valid: true, 
+    message: semesterValidation.message || 'Course moved successfully! ✓' 
+  };
+}
+
+// Function to apply load balancing to generated plan
+function applyLoadBalancing() {
+  const plan = generatedPlans[currentPlanIndex];
+  if (!plan) return;
+  
+  const loadBalanceEnabled = document.getElementById('loadBalanceToggle')?.checked;
+  if (!loadBalanceEnabled) return;
+  
+  console.log('Applying load balancing...');
+  LoadBalancer.redistributeCourses(plan.semesters);
+  displayStudyPlan(currentPlanIndex);
+  TechBot.success('Load balancing applied! ✓');
+}
+
+// Display load metrics in semester cards
+function displayLoadMetrics(semesterCard, courseCodes, semesterIndex) {
+  const load = LoadBalancer.calculateSemesterLoad(courseCodes);
+  const isBalanced = load.weightedScore <= 50;
+  
+  const metricsDiv = document.createElement('div');
+  metricsDiv.className = 'load-metrics';
+  metricsDiv.style.cssText = `
+    padding: 8px 12px;
+    margin: 8px 0;
+    background: ${isBalanced ? '#f0fdf4' : '#fef2f2'};
+    border: 1px solid ${isBalanced ? '#86efac' : '#fca5a5'};
+    border-radius: 6px;
+    font-size: 12px;
+  `;
+  
+  metricsDiv.innerHTML = `
+    <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+      <span title="Difficulty score (lower is easier)">
+        ${isBalanced ? '✅' : '⚠️'} Load: <strong>${load.weightedScore.toFixed(1)}</strong>
+      </span>
+      <span title="Average difficulty per credit hour">
+        Avg: <strong>${load.averageDifficulty.toFixed(1)}/5</strong>
+      </span>
+      <span title="Hardest course difficulty">
+        Max: <strong>${load.maxDifficulty.toFixed(1)}/5</strong>
+      </span>
+    </div>
+  `;
+  
+  return metricsDiv;
+}
+
+// Course attempts modal
+function showAttemptsModal() {
+  const modal = document.createElement('div');
+  modal.id = 'attemptsModal';
+  modal.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+  `;
+  
+  const allCourses = Object.keys(courses).sort();
+  const attempts = AttemptTracker.getAllAttempts();
+  
+  let courseRows = '';
+  allCourses.forEach(code => {
+    const course = courses[code];
+    const attemptCount = attempts[code] || 0;
+    const difficulty = COURSE_DIFFICULTY[code] || 3;
+    
+    courseRows += `
+      <tr>
+        <td style="padding: 8px;">${code}</td>
+        <td style="padding: 8px;">${course.name}</td>
+        <td style="padding: 8px; text-align: center;">${difficulty}/5</td>
+        <td style="padding: 8px; text-align: center;">
+          <input type="number" 
+                 min="0" 
+                 max="10" 
+                 value="${attemptCount}" 
+                 data-course="${code}"
+                 style="width: 60px; padding: 4px; text-align: center;">
+        </td>
+      </tr>
+    `;
+  });
+  
+  modal.innerHTML = `
+    <div style="background: white; border-radius: 12px; padding: 24px; max-width: 800px; max-height: 80vh; overflow-y: auto; width: 90%;">
+      <h2 style="margin: 0 0 16px; font-size: 20px;">📊 Course Attempts & Difficulty</h2>
+      <p style="margin: 0 0 16px; color: #64748b;">
+        Track how many times you've attempted each course. Higher attempts increase the difficulty weight in load balancing.
+      </p>
+      
+      <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+        <thead>
+          <tr style="background: #f1f5f9;">
+            <th style="padding: 8px; text-align: left;">Code</th>
+            <th style="padding: 8px; text-align: left;">Course Name</th>
+            <th style="padding: 8px; text-align: center;">Difficulty</th>
+            <th style="padding: 8px; text-align: center;">Attempts</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${courseRows}
+        </tbody>
+      </table>
+      
+      <div style="margin-top: 20px; display: flex; gap: 12px; justify-content: flex-end;">
+        <button onclick="AttemptTracker.clearAll(); location.reload();" 
+                style="padding: 8px 16px; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer;">
+          Clear All
+        </button>
+        <button onclick="document.getElementById('attemptsModal').remove();" 
+                style="padding: 8px 16px; background: #94a3b8; color: white; border: none; border-radius: 6px; cursor: pointer;">
+          Cancel
+        </button>
+        <button onclick="saveAttempts();" 
+                style="padding: 8px 16px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer;">
+          Save & Apply
+        </button>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+}
+
+function saveAttempts() {
+  const inputs = document.querySelectorAll('#attemptsModal input[data-course]');
+  inputs.forEach(input => {
+    const code = input.dataset.course;
+    const attempts = parseInt(input.value) || 0;
+    AttemptTracker.setAttempts(code, attempts);
+  });
+  
+  document.getElementById('attemptsModal').remove();
+  TechBot.success('Attempts saved! Re-generate plan to apply load balancing.');
+  
+  // Refresh display if plan exists
+  if (currentPlanIndex >= 0 && generatedPlans[currentPlanIndex]) {
+    displayStudyPlan(currentPlanIndex);
+  }
+}
 
       // Configure PDF.js worker - use workerSrc with a fallback
       if (typeof pdfjsLib !== 'undefined') {
@@ -3415,10 +3835,14 @@
               courseItem.dataset.semesterIndex = semesterIndex;
               courseItem.dataset.courseIndex = courseIndex;
               
+              // Get attempt count for this course
+              const attempts = AttemptTracker.getAttempts(code);
+              const attemptBadge = attempts > 0 ? `<span class="attempts-badge" title="Failed ${attempts} time(s)">❌${attempts}</span>` : '';
+              
               courseItem.innerHTML = `
                 <span class="course-drag-handle">⋮⋮</span>
                 <span class="semester-course-code">${code}</span>
-                <span style="flex:1;">${course.name} (${course.hours}h)</span>
+                <span style="flex:1;">${course.name} (${course.hours}h)${attemptBadge}</span>
                 <button class="course-remove-btn" data-code="${code}" data-semester="${semesterIndex}" title="Remove course (cascades dependents)">✕</button>
               `;
 
@@ -3439,6 +3863,13 @@
 
             semesterCard.appendChild(semesterHeader);
             semesterCard.appendChild(coursesDiv);
+
+            // Add load metrics if load balancing is enabled
+            const loadBalanceEnabled = document.getElementById('loadBalanceToggle')?.checked;
+            if (loadBalanceEnabled && !semester.isSummer && semester.courses.length > 0) {
+              const loadMetrics = displayLoadMetrics(semesterCard, semester.courses, semesterIndex);
+              semesterCard.appendChild(loadMetrics);
+            }
 
             // Gained/Remaining footer at bottom of card
             const cardFooter = document.createElement('div');
@@ -4042,10 +4473,28 @@
         function validateCourseMove(courseCode, fromIndex, toIndex) {
           const plan = generatedPlans[currentPlanIndex];
           const toSemester = plan.semesters[toIndex];
+          const fromSemester = plan.semesters[fromIndex];
           const course = courses[courseCode];
 
           if (!course) {
             return { valid: false, message: 'Course not found' };
+          }
+
+          // ============================================================
+          // NEW: Prevent Project 1 and Project 2 from moving between odd/even semesters
+          // ============================================================
+          if (courseCode === 'PC401' || courseCode === 'PC402') {
+            const fromIsOdd = fromSemester.name.includes('First');
+            const toIsOdd = toSemester.name.includes('First');
+            
+            if (fromIsOdd !== toIsOdd && !toSemester.isSummer) {
+              const projectName = courseCode === 'PC401' ? 'Project 1' : 'Project 2';
+              const requiredType = fromIsOdd ? 'odd (First/Fall)' : 'even (Second/Spring)';
+              return {
+                valid: false,
+                message: `🚫 ${projectName} must remain in ${requiredType} semesters. Cannot move to ${toIsOdd ? 'odd' : 'even'} semester.`
+              };
+            }
           }
 
           // 🆕 NEW: Validate summer/normal placement
@@ -4854,6 +5303,13 @@
 
           selectorDiv.style.display = 'block';
           window._planJustGenerated = true; // Flag set before display so scroll fires once
+          
+          // Apply load balancing if enabled
+          const loadBalanceEnabled = document.getElementById('loadBalanceToggle')?.checked;
+          if (loadBalanceEnabled && generatedPlans[0]) {
+            LoadBalancer.redistributeCourses(generatedPlans[0].semesters);
+          }
+          
           displayStudyPlan(0);
         }
 
@@ -5604,5 +6060,19 @@
     document.addEventListener('DOMContentLoaded', function() {
       const pctEl = document.getElementById('creditPercentage');
       if (pctEl) ringObserver.observe(pctEl, { childList: true, characterData: true, subtree: true });
+      
+      // Load balance toggle event listener
+      const loadBalanceToggle = document.getElementById('loadBalanceToggle');
+      if (loadBalanceToggle) {
+        loadBalanceToggle.addEventListener('change', function() {
+          if (currentPlanIndex >= 0 && generatedPlans[currentPlanIndex]) {
+            if (this.checked) {
+              LoadBalancer.redistributeCourses(generatedPlans[currentPlanIndex].semesters);
+              TechBot.success('Load balancing applied! ⚖️');
+            }
+            displayStudyPlan(currentPlanIndex);
+          }
+        });
+      }
     });
   
